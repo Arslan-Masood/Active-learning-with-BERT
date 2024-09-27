@@ -166,7 +166,7 @@ if config["sample_only_from_aux"]:
 
 
 # In[5]:
-
+# changes
 # make dir
 t_names = config["main_task"][0]# +"_"+ config["aux_task"][0]
 query_set_dir = config["metadata_dir"] + t_names +"/query_set/"
