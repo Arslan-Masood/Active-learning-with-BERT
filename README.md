@@ -1,20 +1,27 @@
 # Active Learning with BERT for Molecular Property Prediction
 
-This repository contains the implementation of our approach combining pretrained BERT with Bayesian Active Learning for efficient molecular property prediction in drug discovery.
+This repository contains the implementation of our paper "Molecular Property Prediction using Pretrained-BERT and Bayesian Active Learning: A Data-Efficient Approach to Drug Design". Our approach combines pretrained BERT with Bayesian Active Learning to achieve efficient molecular property prediction with 50% fewer labeled compounds.
 
 <p align="center">
-  [You can add your architecture diagram here]
+  [Architecture diagram showing BERT + Active Learning pipeline]
 </p>
 
 ## Table of Contents
+- [Overview](#overview)
 - [Installation](#installation)
-- [Data Preparation](#data-preparation)
-- [Model Architecture](#model-architecture)
-- [Training the Model](#training-the-model)
-- [Active Learning Pipeline](#active-learning-pipeline)
-- [Reproducing Results](#reproducing-results)
+- [Data](#data)
+- [Usage](#usage)
 - [Results](#results)
 - [Citation](#citation)
+- [Contact](#contact)
+
+## Overview
+
+Our framework achieves efficient molecular property prediction by:
+- Leveraging pretrained BERT representations from 1.26M compounds
+- Using Bayesian uncertainty estimation for active learning
+- Achieving equivalent performance with 50% fewer labeled compounds
+- Demonstrating improved uncertainty calibration
 
 ## Installation
 
@@ -28,7 +35,7 @@ cd Active-learning-with-BERT
 2. Create and activate a conda environment:
 
 ```bash
-conda create -y -q -n ActiveBERT python=3.7.3
+conda create -y -q -n ActiveBERT python=3.9.10
 conda activate ActiveBERT
 ```
 
@@ -38,46 +45,58 @@ conda activate ActiveBERT
 pip install -r requirements.txt
 ```
 
-## Data Preparation
+## Data
 
-The model uses two main datasets:
-1. Tox21: Toxicity prediction dataset
-2. ClinTox: Clinical toxicity dataset
+### Datasets
+We use two benchmark datasets for toxicity prediction:
+- **Tox21**: Toxicity prediction dataset
+- **ClinTox**: Clinical toxicity dataset
 
-Download the the complete folder, "datasets_for_active_learning", from the following link:
-that contains the raw data, BERT features, and computed Morgan fingerprints.
-We used MolBERT (https://github.com/BenevolentAI/MolBERT) to compute the BERT features.
+### Download Instructions
+1. Download the complete `datasets_for_active_learning` folder from [Figshare](https://figshare.com/articles/dataset/Datasets_and_computed_features/28580027)
+2. This folder contains:
+   - Raw molecular data
+   - Precomputed BERT features (using [MolBERT](https://github.com/BenevolentAI/MolBERT))
+   - Computed Morgan fingerprints
+3. Place the downloaded data in the `datasets` directory
 
-## Active Learning Pipeline
+## Usage
 
-1. All scripts and configuration files are in `scripts/`
+### Running Experiments
 
-## Reproducing Results
-
-To reproduce our experimental results:
-
-1. Download the datasets and compy in the folder `datasets`
-
-For Tox21
---> with BERT Features
+#### Tox21 Dataset
+With BERT Features:
 ```bash
 sbatch scripts/Active_learning_Tox21.sh configs/Tox21/BERT/Tox21_BERT.json
 ```
---> with ECFP
+
+With Morgan Fingerprints (ECFP):
 ```bash
 sbatch scripts/Active_learning_Tox21.sh configs/Tox21/MF/Tox21_MF.json
 ```
 
-For ClinTox:
---> with BERT Features
+#### ClinTox Dataset
+With BERT Features:
 ```bash
-sbatch sbatch scripts/Active_learning.sh configs/clintox/MolBERT_features/ClinTox_BALD.json
+sbatch scripts/Active_learning.sh configs/clintox/MolBERT_features/ClinTox_BALD.json
 ```
---> with ECFP
+
+With Morgan Fingerprints (ECFP):
 ```bash
 sbatch scripts/Active_learning.sh configs/clintox/Morg_FP_features/ClinTox_BALD.json
 ```
 
+## Citation
+
+If you use this code in your research, please cite:
+```bibtex
+@article{masood2024molecular,
+    title={Molecular Property Prediction using Pretrained-BERT and Bayesian Active Learning: A Data-Efficient Approach to Drug Design},
+    author={Muhammad Arslan Masood},
+    journal={under review},
+    year={2024}
+}
+```
 
 ## License
 
@@ -85,4 +104,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-Muhammad Arslan Masood - arslan.masood@aalto.fi
+- **Muhammad Arslan Masood**
+- Email: arslan.masood@aalto.fi
+- Institution: Aalto University
