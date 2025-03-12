@@ -49,9 +49,9 @@ We use three benchmark datasets:
    - **ClinTox**: Clinical toxicity dataset focusing on drug safety
 
 2. **ADME Dataset**:
-   - 2 classification datasets from TDC -ADME benchmark
-    - PAMPA Permeability, NCATS
-    - Pgp (P-glycoprotein) Inhibition, Broccatelli et al.
+   - 2 classification datasets from TDC-ADME benchmark:
+      - PAMPA Permeability, NCATS
+      - Pgp (P-glycoprotein) Inhibition, Broccatelli et al.
 
 ### Download Instructions
 1. Download the complete `datasets_for_active_learning` folder from [Figshare](https://figshare.com/articles/dataset/Datasets_and_computed_features/28580027)
