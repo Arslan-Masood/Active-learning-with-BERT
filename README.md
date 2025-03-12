@@ -7,7 +7,6 @@ This repository contains the implementation of our paper "Molecular Property Pre
 - [Installation](#installation)
 - [Data](#data)
 - [Usage](#usage)
-- [Results](#results)
 - [Citation](#citation)
 - [Contact](#contact)
 
