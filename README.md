@@ -90,7 +90,7 @@ sbatch scripts/Active_learning.sh configs/clintox/Morg_FP_features/ClinTox_BALD.
 #### ADME Properties
 With BERT and ECFP Features:
 ```bash
-sbatch /scripts/Ative_learning_ADME.sh /scripts/configs/ADME/ADME.json```
+sbatch /scripts/Ative_learning_ADME.sh /scripts/configs/ADME/ADME.json
 ```
 
 ## Citation
