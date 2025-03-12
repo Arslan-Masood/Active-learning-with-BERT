@@ -61,22 +61,18 @@ def enable_dropout(model):
             m.train()
 
 
-def get_pred_with_uncertainities(dataloader, model, n_classes, cal_uncert=False, num_forward_passes=1, device=None):
+def get_pred_with_uncertainities(dataloader, model, n_samples, n_classes, cal_uncert=False, num_forward_passes=1, device = None):
+
     dropout_predictions = []
     for i in range(num_forward_passes):
         torch.manual_seed(i)
         model = model.eval()
         model = model.to(device)
-        if cal_uncert:
+        if cal_uncert == True:
             enable_dropout(model)
         preds, targets = [], []
-        
-        # Calculate total samples considering the last batch
-        n_samples = 0
         for batch in dataloader:
             batch_x, batch_targets = batch
-            n_samples += len(batch_targets)  # Count actual number of samples
-            
             with torch.no_grad():
                 batch_preds = model(batch_x.to(device))
                 batch_preds = batch_preds.cpu().detach().tolist()
@@ -88,8 +84,9 @@ def get_pred_with_uncertainities(dataloader, model, n_classes, cal_uncert=False,
         dropout_predictions.append(preds.reshape(-1, n_samples, n_classes))
 
     dropout_predictions = np.concatenate(dropout_predictions, axis=0)
+        
     pred_mean = np.mean(dropout_predictions, axis=0)
-    pred_var = np.var(dropout_predictions, axis=0)  # epistemic uncertainty
+    pred_var = np.var(dropout_predictions, axis=0)
 
     return targets, pred_mean, pred_var, dropout_predictions
 
@@ -188,49 +185,6 @@ def EPIG_MT_acquisition_function(probs_pool, probs_targ):
     """
     scores = conditional_epig_from_probs(probs_pool, probs_targ)  # [N_p, N_t, cl_p]
     return epig_from_conditional_scores(scores)  # [N_p,cl_p]
-######################################################################3
-# greedy_acquisition_function
-#######################################################################
-def greedy_acquisition_function(pred):
-    '''
-    Selects samples based on the surrogate model's mean predictions.
-    For binary classification, selects points with highest mean probability.
-    
-    Args:
-        pred: probability array of shape (repeats, mol, tasks)
-    
-    Returns:
-        mean predictions of shape (mol, tasks)
-    '''
-    # Calculate mean predictions across MC samples
-    pred_mean = pred.mean(axis=0)  # shape: (mol, tasks)
-    
-    # For binary classification, we return the mean probabilities
-    # Higher values indicate stronger positive class predictions
-    return pred_mean
-
-######################################################################3
-# ucb_acquisition_function
-#######################################################################
-def ucb_acquisition_function(pred, beta=2.0):
-    '''
-    Upper Confidence Bound acquisition function
-    UCB = mean + beta * std
-    
-    Args:
-        pred: probability array of shape (repeats, mol, tasks)
-        beta: exploration-exploitation trade-off parameter (default: 2.0)
-    
-    Returns:
-        UCB scores of shape (mol, tasks)
-    '''
-    pred_mean = pred.mean(axis=0)  # (mol, tasks)
-    pred_std = pred.std(axis=0)    # (mol, tasks)
-    
-    # UCB acquisition function
-    ucb_scores = pred_mean + beta * pred_std
-    
-    return ucb_scores
 #############################################################################################
 
 def get_random_indices(pool_set, args):

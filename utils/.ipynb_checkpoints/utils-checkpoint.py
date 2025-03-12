@@ -1,4 +1,4 @@
-import os
+
 import re
 import pandas as pd
 import numpy as np
@@ -10,13 +10,16 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.callbacks import ModelCheckpoint
 
 def wandb_init_model(model, config, train_dataloader,val_dataloader, model_type):
+    if val_dataloader == None:
+        limit_val_batches = 0.0
+    else:
+        limit_val_batches = 1.0
     # Init our model
     if model_type == 'chemprop':
         run = wandb.init(
                         project= config.project_name,
                         dir = '/projects/home/mmasood1/Model_weights',
                         entity="arslan_masood", 
-                        mode = config.wandb_mode,
                         reinit = True, 
                         config = None,
                         name = config.model_name,
@@ -25,10 +28,7 @@ def wandb_init_model(model, config, train_dataloader,val_dataloader, model_type)
         default_root_dir = config.model_weights_dir
         use_pretrained_model = config.pretrained_model
         use_EarlyStopping = config.EarlyStopping
-        patience = config.patience
         max_epochs = config.epochs
-        min_epochs = config.min_epochs
-        check_val_every_n_epoch = config.check_val_every_n_epoch
         accelerator =config.accelerator
         return_trainer = config.return_trainer
         print(max_epochs)
@@ -37,7 +37,6 @@ def wandb_init_model(model, config, train_dataloader,val_dataloader, model_type)
                         project= config["project_name"],
                         dir = '/projects/home/mmasood1/Model_weights',
                         entity="arslan_masood", 
-                        mode = config["wandb_mode"],
                         reinit = True, 
                         config = config,
                         name = config["model_name"],
@@ -46,58 +45,50 @@ def wandb_init_model(model, config, train_dataloader,val_dataloader, model_type)
         default_root_dir = config["model_weights_dir"]
         use_pretrained_model = config["pretrained_model"]
         use_EarlyStopping = config["EarlyStopping"]
-        patience = config["patience"]
         max_epochs = config["epochs"]
-        min_epochs = config["min_epochs"]
-        check_val_every_n_epoch = config["check_val_every_n_epoch"]
         accelerator =config["accelerator"]
         return_trainer = config["return_trainer"]
-        wandb_offline = config["wandb_offline"]
-        metric_to_monitor = config["metric_to_monitor"]
-        metric_direction = config["metric_direction"]
+
     if use_pretrained_model:
         model = pretrained_model(model,config)
     else:
         model = model(config)
-    wandb_logger = WandbLogger(wandb_dir=config["wandb_dir"], 
-                                offline=config["wandb_offline"]
-                               )
+    wandb_logger = WandbLogger()
     #wandb_logger.watch(model, log="all",log_freq=1)
     
     if use_EarlyStopping == True:
         callback = [EarlyStopping(
-                                monitor=metric_to_monitor,
+                                monitor='val_BCE_loss',
                                 min_delta=1e-5,
-                                patience=patience,
+                                patience=10,
                                 verbose=False,
-                                mode=metric_direction
+                                mode='min'
                                 )]
     else:
         callback = []
+
     checkpoint_callback = ModelCheckpoint(
-            monitor=metric_to_monitor,  # Metric to monitor for saving the best model
-            mode='min',          # Minimize the monitored metric
-            dirpath= default_root_dir,  # Directory to store checkpoints
-            #filename='model-{epoch:02d}-{val_BCE_non_weighted:.4f}',  # Checkpoint filename format
-            filename=config['checkpoint_name'],  # Checkpoint filename format
-            save_top_k=1,
-            save_last = False)
+    monitor='val_BCE_non_weighted',  # Metric to monitor for saving the best model
+    mode='min',          # Minimize the monitored metric
+    dirpath= default_root_dir,  # Directory to store checkpoints
+    filename='model-{epoch:02d}-{val_BCE_loss:.2f}',  # Checkpoint filename format
+    #filename=config['chkp_file_name'],  # Checkpoint filename format
+    save_top_k=1,
+    save_last = True)
     callback.append(checkpoint_callback)
 
 
     trainer = Trainer(
         callbacks=callback,
         max_epochs= int(max_epochs),
-        min_epochs = int(min_epochs),
         accelerator= accelerator, 
-        check_val_every_n_epoch = int(check_val_every_n_epoch),
         #devices= config['gpu'],
         #limit_val_batches = 5,
         #limit_train_batches= 5,
         #precision=16,
-        enable_progress_bar = False,
+        enable_progress_bar = True,
         #profiler="simple",
-        enable_model_summary=False,
+        enable_model_summary=True,
         logger=wandb_logger,
         default_root_dir=default_root_dir)
 
@@ -106,19 +97,11 @@ def wandb_init_model(model, config, train_dataloader,val_dataloader, model_type)
                 train_dataloaders=train_dataloader,
                 val_dataloaders =val_dataloader,
                 )
-
-    try:
-        print(f"Loading best model from {checkpoint_callback.best_model_path}")
-        print(f"Best validation score: {checkpoint_callback.best_model_score}")
-        model = model.load_from_checkpoint(checkpoint_callback.best_model_path, config=config)
-    except Exception as e:
-        print(f"Error loading checkpoint: {e}")
-        raise  # Re-raise the exception since we can't proceed without the best model
-
     if return_trainer:
         return model, run, trainer
     else:
         return model, run
+    
 
 #####################################################################################3
 # get pretrained model
@@ -231,8 +214,8 @@ def compute_binary_classification_metrics_MT(y_true, y_pred_proba,
             y_true_task = y_true[:, i]
             y_pred_proba_task = y_pred_proba[:, i]
         else:
-            y_true_task = y_true.reshape(-1)
-            y_pred_proba_task = y_pred_proba.reshape(-1)
+            y_true_task = y_true
+            y_pred_proba_task = y_pred_proba
             
         # Apply masking
         if missing == 'nan':
@@ -325,9 +308,9 @@ def compute_ece(y_true, y_prob, n_bins=10, equal_intervals = True):
 ################################################3
 # Calibration metrics
 ################################################
-from utils.model_utils import BALD_acquisition_function, EPIG_MT_acquisition_function, greedy_acquisition_function, ucb_acquisition_function
+from utils.model_utils import BALD_acquisition_function, EPIG_MT_acquisition_function, get_top_indices
 from utils.data_utils import get_random_query_set, get_query_set, update_training_set, remove_queried_index_from_pool_set
-from utils.model_utils import get_pred_with_uncertainities, get_top_indices
+from utils.model_utils import get_pred_with_uncertainities
 
 def active_learning_loop(trained_model,
                          pool_dataloader, 
@@ -338,9 +321,10 @@ def active_learning_loop(trained_model,
                          test_dataloader = None,
                          test_set = None):
     if query_set is None:
-        ####### Uncertainty estimation ################
+        ####### Uncertainity estmation ################
         if config["sampling_strategy"] == "BALD":
             _, _, _, all_pred = get_pred_with_uncertainities(pool_dataloader, trained_model,
+                                                            n_samples=pool_set.shape[0],
                                                             n_classes=config["num_of_tasks"],
                                                             cal_uncert=True,
                                                             num_forward_passes=config["num_forward_passes"],
@@ -350,16 +334,17 @@ def active_learning_loop(trained_model,
             # We should not query with missing labels, so hide it
             nan_mask = ~np.isnan(pool_set[config["selected_tasks"]].values)
             acquisition = acquisition * nan_mask
-            print("Acquisition shape: ", acquisition.shape)
-            print("Max acquisition score: ", np.max(acquisition))
+
+            print(np.max(acquisition))
 
             # Get location of TopGuns
             top_indices = get_top_indices(acquisition, config["n_query"])
             query_set = get_query_set(pool_set, top_indices)
 
-        elif config["sampling_strategy"] == "EPIG_MT":
+        if config["sampling_strategy"] == "EPIG_MT":
             print("######### EPIG SAMPLING ############")
             _, _, _, pool_pred = get_pred_with_uncertainities(pool_dataloader, trained_model,
+                                                            n_samples=pool_set.shape[0],
                                                             n_classes=config["num_of_tasks"],
                                                             cal_uncert=True,
                                                             num_forward_passes=config["num_forward_passes"],
@@ -368,6 +353,7 @@ def active_learning_loop(trained_model,
             pool_pred = torch.from_numpy(pool_pred)
 
             _,_, _, test_pred = get_pred_with_uncertainities(test_dataloader, trained_model,
+                                                            n_samples=test_set.shape[0],
                                                             n_classes=config["num_of_tasks"],
                                                             cal_uncert=True,
                                                             num_forward_passes=config["num_forward_passes"],
@@ -384,58 +370,14 @@ def active_learning_loop(trained_model,
             # We should not query with missing labels, so hide it
             nan_mask = ~np.isnan(pool_set[config["selected_tasks"]].values)
             acquisition = acquisition * nan_mask
-            print("Acquisition shape: ", acquisition.shape)
-            print("Max acquisition score: ", np.max(acquisition))
+            print(np.max(acquisition))
 
             # Get location of TopGuns
             top_indices = get_top_indices(acquisition, config["n_query"])
             query_set = get_query_set(pool_set, top_indices)
 
-        elif config["sampling_strategy"] == "greedy":
-            print("######### GREEDY SAMPLING ############")
-            _, _, _, all_pred = get_pred_with_uncertainities(pool_dataloader, trained_model,
-                                                            n_classes=config["num_of_tasks"],
-                                                            cal_uncert=True,
-                                                            num_forward_passes=config["num_forward_passes"],
-                                                            device = config["device"])
-            
-            acquisition = greedy_acquisition_function(all_pred)
-            
-            # We should not query with missing labels, so hide it
-            nan_mask = ~np.isnan(pool_set[config["selected_tasks"]].values)
-            acquisition = acquisition * nan_mask
-            
-            print("Acquisition shape: ", acquisition.shape)
-            print(f"Max acquisition score: {np.max(acquisition)}")
-
-            # Get location of TopGuns
-            top_indices = get_top_indices(acquisition, config["n_query"])
-            query_set = get_query_set(pool_set, top_indices)
-
-        elif config["sampling_strategy"] == "ucb":
-            print("######### UCB SAMPLING ############")
-            _, _, _, all_pred = get_pred_with_uncertainities(pool_dataloader, trained_model,
-                                                            n_classes=config["num_of_tasks"],
-                                                            cal_uncert=True,
-                                                            num_forward_passes=config["num_forward_passes"],
-                                                            device = config["device"])
-            
-            # Get UCB acquisition scores with beta parameter from config
-            acquisition = ucb_acquisition_function(all_pred, beta= config["ucb_beta"])
-            
-            # We should not query with missing labels, so hide it
-            nan_mask = ~np.isnan(pool_set[config["selected_tasks"]].values)
-            acquisition = acquisition * nan_mask
-            print("Acquisition shape: ", acquisition.shape)
-            print(f"Max acquisition score: {np.max(acquisition)}")
-
-            # Get location of TopGuns
-            top_indices = get_top_indices(acquisition, config["n_query"])
-            query_set = get_query_set(pool_set, top_indices)
-
-        elif config["sampling_strategy"] == "uniform":
-            query_set = get_random_query_set(pool_set, config)
-            
+        if config["sampling_strategy"] == "uniform":
+            query_set = get_random_query_set(pool_set, config)  
     else:
         print("No sample taken")      
     ##########  updated dataset ##################

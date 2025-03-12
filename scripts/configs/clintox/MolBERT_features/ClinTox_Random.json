@@ -1,0 +1,79 @@
+{
+"project_name": "ClinTox_Random",
+
+// input files 
+"target_file": "/scratch/work/masooda1/datasets/datasets_for_active_learning/raw_data/clintox.csv",
+"BERT_features_file": "/scratch/work/masooda1/datasets/datasets_for_active_learning/MolBERT_features/MolBERT_clintox.csv",
+"pos_weights": "/scratch/work/masooda1/datasets/datasets_for_active_learning/raw_data/pos_ratio.csv",
+"class_weights": "/path/to/class_weights.json",
+
+// output dir
+"metadata_dir": "/scratch/cs/pml/AI_drug/trained_model_pred/active_learning/ClinTox/",
+"wandb_dir": "/scratch/cs/pml/AI_drug/trained_model_pred/active_learning/ClinTox/wandb/",
+"wandb_offline": true,
+"wandb_mode": "offline",
+
+// data split
+"train_test_split_exists": false,
+"Compound_col": "SMILES",
+"train_frac": 0.8,
+"use_all_tasks_to_split": true
+
+// input features
+"features_type": "BERT",
+"fp_size": 1024,
+
+// BNN architecture
+"input_dim": 768,
+"hidden_dim": 128,
+"depth" : 1,
+"dropout_p": 0.5,
+"BatchNorm1d": true,
+"use_skip_connection": true,
+"l2_lambda": 1e-4,
+"optm_l2_lambda": 1e-4,
+
+// optimization
+"optim": "Adam",
+"lr": 0.001,
+"lr_schedulers": "CosineAnnealingLR",
+
+// weighted losses
+"loss_type" : "BCE",
+"missing" : 'nan',
+"alpha": 0.0,
+"beta": 0.0,
+"gamma":0.0,
+
+// training
+"epochs": 1000,
+"min_epochs": 50,
+"compute_metric_after_n_epochs": 1,
+"batch_size": 32,
+"pretrained_model": false,
+"return_trainer": true,
+"gpu": [0], // [0], null
+"accelerator": "gpu", //"gpu","cpu"
+
+// early stopping
+"check_val_every_n_epoch": 1,
+"EarlyStopping": true,
+"metric_to_monitor": "val_BCE_non_weighted",
+"metric_direction": "min",
+"patience": 20, // it will stop compute_metric_after_n_epochs * patience
+
+// tasks selection 
+"all_tasks":"Y",
+"main_task": "Y",
+"main_task_index":0, 
+"aux_task": null,  
+"aux_task_index": null,
+
+// active learning
+"main_task_initial_set_samples": 100,
+"num_forward_passes": 20,
+"num_iterations": 1000,
+"sampling_strategy": "uniform",
+"n_query": 1,
+    
+}

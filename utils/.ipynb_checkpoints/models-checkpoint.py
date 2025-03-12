@@ -357,7 +357,7 @@ class Vanilla_MLP_classifier(pl.LightningModule):
         # pos weights
         pos_weights = pd.read_csv(config["pos_weights"])
         if config["num_of_tasks"] == 1:
-            pos_weights = pos_weights[pos_weights.Targets == config["selected_tasks"][0]].weights.values
+            pos_weights = pos_weights.set_index("Targets").reindex([config["selected_tasks"][0]]).weights.values
         else:
             pos_weights = pos_weights.set_index("Targets").reindex(config["selected_tasks"]).weights.values
         
@@ -465,10 +465,10 @@ class Vanilla_MLP_classifier(pl.LightningModule):
         negative_label_mask = (y == 0)
 
         if self.loss_type == "BCE":
-            weighted_loss = self.weighted_creterien(y_hat.reshape(-1,self.num_of_tasks), y.reshape(-1,self.num_of_tasks)) * valid_label_mask
+            weighted_loss = self.weighted_creterien(y_hat, y) * valid_label_mask
         if self.loss_type == "Focal_loss":
-            weighted_loss = self.FL(y_hat.reshape(-1,self.num_of_tasks), y.reshape(-1,self.num_of_tasks)) * valid_label_mask
-        Non_weighted_loss = self.non_weighted_creterian(y_hat.reshape(-1,self.num_of_tasks), y.reshape(-1,self.num_of_tasks)) * valid_label_mask
+            weighted_loss = self.FL(y_hat, y)* valid_label_mask
+        Non_weighted_loss = self.non_weighted_creterian(y_hat, y) * valid_label_mask
 
         if self.loss_type == 'Focal_loss_v2':
             Non_weighted_loss = self.non_weighted_creterian(y_hat, y) * valid_label_mask

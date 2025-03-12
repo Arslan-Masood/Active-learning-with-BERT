@@ -1,0 +1,69 @@
+{
+"seed": 42,
+"project_name": "MyActiveLearningProject",
+
+// input files 
+"target_file": "/scratch/work/masooda1/datasets/datasets_for_active_learning/raw_data/clintox.csv",
+"BERT_features_file": "/scratch/work/masooda1/datasets/datasets_for_active_learning/MolBERT_features/MolBERT_clintox.csv",
+"pos_weights": "/scratch/work/masooda1/datasets/datasets_for_active_learning/raw_data/pos_ratio.csv",
+"class_weights": "/path/to/class_weights.json",
+
+// output dir
+"metadata_dir": "/scratch/work/masooda1/trained_model_pred/active_learning/ClinTox/",
+
+
+// data split
+"train_frac": 0.8,
+"use_all_tasks_to_split": true
+
+// input features
+"features_type": "BERT",
+"fp_size": 1024,
+
+// BNN architecture
+"input_dim": 768,
+"hidden_dim": 128,
+"depth" : 1,
+"dropout_p": 0.5,
+"BatchNorm1d": true,
+"use_skip_connection": true,
+"l2_lambda": 0.01,
+"optm_l2_lambda": 0.01,
+
+// optimization
+"optim": "Adam",
+"lr": 0.001,
+"lr_schedulers": "StepLR",
+
+// weighted losses
+"loss_type" : "BCE",
+"missing" : 'nan',
+"alpha": 0.0,
+"beta": 0.0,
+"gamma":0.0,
+
+// training
+"epochs": 50,
+"compute_metric_after_n_epochs": 5,
+"batch_size": 16,
+"EarlyStopping": false,
+"pretrained_model": false,
+"return_trainer": True,
+"gpu": [0], // [0], null
+"accelerator": "gpu", //"gpu","cpu"
+
+// tasks selection 
+"all_tasks":"Y",
+"main_task": "Y",
+"main_task_index":0, 
+"aux_task": null,  
+"aux_task_index": null,
+
+// active learning
+"main_task_initial_set_samples": 16,
+"num_forward_passes": 10,
+"num_iterations": 10,
+"sampling_strategy": "BALD",
+"n_query": 1,
+    
+}

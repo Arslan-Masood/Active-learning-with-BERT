@@ -1,7 +1,5 @@
 import numpy as np
 import pandas as pd
-import pyarrow.parquet as pq
-import os
 
 import deepchem as dc
 from deepchem.data import NumpyDataset
@@ -28,28 +26,19 @@ def drop_unwanted_tasks(dc_dataset, config):
 ########################################################
 # scafoldsplit_train_test
 #####################################################
-def read_file(file_path):
-    _, file_extension = os.path.splitext(file_path)
-    if file_extension.lower() == '.parquet':
-        return pd.read_parquet(file_path)
-    elif file_extension.lower() == '.tab':
-        return pd.read_csv(file_path, sep='\t')
-    else:
-        return pd.read_csv(file_path)
-    
 def scafoldsplit_train_test(config, all_tasks = False):
     np.random.seed(config["seed"])
     
     if config["features_type"] == "FP":
-        data = read_file(config["target_file"])
-        BERT_features = read_file(config["BERT_features_file"])
-        ECFP_features = read_file(config["ECFP_features_file"])
+        data = pd.read_csv(config["target_file"])
+        BERT_features = pd.read_csv(config["BERT_features_file"])
+        ECFP_features = pd.read_csv(config["ECFP_features_file"])
 
-        data = data[data[config["Compound_col"]].isin(BERT_features["SMILES"])]
-        data = data.drop_duplicates(subset = config["Compound_col"])
+        data = data[data.SMILES.isin(BERT_features["SMILES"])]
+        data = data.drop_duplicates(subset = "SMILES")
         data = data.reset_index(drop = True)
 
-        ECFP_features = ECFP_features[ECFP_features["SMILES"].isin(data[config["Compound_col"]])]
+        ECFP_features = ECFP_features[ECFP_features.SMILES.isin(data["SMILES"])]
         ECFP_features = ECFP_features.drop_duplicates(subset = "SMILES")
         ECFP_features = ECFP_features.reset_index(drop = True)
 
@@ -60,11 +49,10 @@ def scafoldsplit_train_test(config, all_tasks = False):
         X = ECFP_features.iloc[:,1:].values
 
     if config["features_type"] == "BERT":
-        data = read_file(config["target_file"])
-        BERT_features = read_file(config["BERT_features_file"])
-
-        data = data[data[config["Compound_col"]].isin(BERT_features["SMILES"])]
-        data = data.drop_duplicates(subset = config["Compound_col"])
+        data = pd.read_csv(config["target_file"])
+        BERT_features = pd.read_csv(config["BERT_features_file"])
+        data = data[data.SMILES.isin(BERT_features["SMILES"])]
+        data = data.drop_duplicates(subset = "SMILES")
         data = data.reset_index(drop = True)
 
         if all_tasks:
@@ -74,21 +62,10 @@ def scafoldsplit_train_test(config, all_tasks = False):
         X = BERT_features.iloc[:,1:].values
 
     # split data into train and test
-    if config["splitter"] == "ScaffoldSplitter":
-        splitter = dc.splits.ScaffoldSplitter()
-    elif config["splitter"] == "ButinaSplitter":
-        splitter = dc.splits.ButinaSplitter()
-    elif config["splitter"] == "RandomSplitter":
-        splitter = dc.splits.RandomSplitter()
-    elif config["splitter"] == "RandomStratifiedSplitter":
-        splitter = dc.splits.RandomStratifiedSplitter()
-    
-    else:
-        raise ValueError(f"Invalid splitter: {config['splitter']}")
-
+    splitter = dc.splits.ScaffoldSplitter()
     if len(y.shape) == 1:
         y = y.reshape(-1,1)
-    dc_dataset = NumpyDataset(X = X, y = y, ids = data[config["Compound_col"]])
+    dc_dataset = NumpyDataset(X = X, y = y, ids = data.SMILES)
     train_set, test_set = splitter.train_test_split(dataset = dc_dataset,
                                                     frac_train = config["train_frac"], 
                                                     seed = 42)
@@ -149,47 +126,18 @@ def convert_to_dataframe(dc_datset, tasks_name):
     dataset.insert(0, "SMILES", dc_datset.ids)
     return dataset
 
-def get_train_test_features(dataset,config):
-    """Get and concatenate train and test features."""
-    if config["features_type"] == "BERT":
-        # Read train and test BERT features
-        train_features = read_file(config["train_BERT_features_file"])
-        test_features = read_file(config["test_BERT_features_file"])
-        
-        # Concatenate features
-        features = pd.concat([train_features, test_features], axis=0)
-        features = features.drop_duplicates(subset="SMILES").reset_index(drop=True)
-    elif config["features_type"] == "FP":
-        # Read train and test FP features
-        train_features = read_file(config["train_ECFP_features_file"])
-        test_features = read_file(config["test_ECFP_features_file"])
-        
-        # Concatenate features
-        features = pd.concat([train_features, test_features], axis=0)
-        features = features.drop_duplicates(subset="SMILES").reset_index(drop=True)
-    
-    SMILES = pd.DataFrame({'SMILES': dataset.SMILES})
-    X = pd.merge(SMILES, features, on = "SMILES", how = "inner")
-    X = X.drop(columns= 'SMILES').values
-    X = pd.merge(SMILES, features, on = "SMILES", how = "inner")
-    X = X.drop(columns= 'SMILES').values
-    print("After merging", X.shape)
-
-    return X
-
 def get_features(dataset, config):
     SMILES = pd.DataFrame({'SMILES': dataset.SMILES})
     if config["features_type"] == "BERT":
-        features = read_file(config["BERT_features_file"])
+        features = pd.read_csv(config["BERT_features_file"])
     if config["features_type"] == "FP":
-        features = read_file(config["ECFP_features_file"])
-    # drop duplicate SMILES
-    features = features.drop_duplicates(subset = "SMILES").reset_index(drop = True)
+        features = pd.read_csv(config["ECFP_features_file"])
+
     if config["features_type"] == "DILI_dataset":
         seed = config["seed"]
-        train_features = read_file(config["target_dir"] + f"train_DILI_BERT_features_seed_{seed}.csv")
-        valid_features = read_file(config["target_dir"] + f"valid_DILI_BERT_features_seed_{seed}.csv")
-        test_features = read_file(config["target_dir"] + f"test_DILI_BERT_features_seed_{seed}.csv")
+        train_features = pd.read_csv(config["target_dir"] + f"train_DILI_BERT_features_seed_{seed}.csv")
+        valid_features = pd.read_csv(config["target_dir"] + f"valid_DILI_BERT_features_seed_{seed}.csv")
+        test_features = pd.read_csv(config["target_dir"] + f"test_DILI_BERT_features_seed_{seed}.csv")
         features = pd.concat([train_features,valid_features, test_features]).reset_index(drop = True)
 
     X = pd.merge(SMILES, features, on = "SMILES", how = "inner")
@@ -201,15 +149,12 @@ def get_features(dataset, config):
 
 def convert_dataframe_to_dataloader(dataframe, config, shuffle = False, drop_last = False):
     
-    if config["train_test_split_exists"]:
-        X = get_train_test_features(dataframe, config)
-    else:
-        X = get_features(dataframe, config)
+    X = get_features(dataframe, config)
     y = dataframe[config["selected_tasks"]].values
     dataloader = DataLoader(dataloader_for_numpy(X, y, x_type = 'Fingerprints'), 
                                                                 batch_size=config["batch_size"],
                                                                 pin_memory=False,
-                                                                num_workers=config["num_workers"], 
+                                                                num_workers=1, 
                                                                 shuffle = shuffle,
                                                                 persistent_workers=False,
                                                                 drop_last = drop_last)
@@ -354,36 +299,33 @@ def get_initial_set_with_main_and_aux_samples(train_set, config):
             np.random.choice(main_task_active_indices, num_samples_per_class, replace=False),
             np.random.choice(main_task_inactive_indices, num_samples_per_class, replace=False)
         ])
-    
-    # Ensure selected_tasks is a list
-    selected_tasks = config["selected_tasks"] if isinstance(config["selected_tasks"], list) else [config["selected_tasks"]]
-    
     if config["aux_task"] != None:
         main_task_data = train_set.select(main_selected_indices)
         # We are selecting only main task, hide aux tasks
         main_task_data.y[:,config["aux_task_index"]] = np.nan
-        initial_set_data = convert_to_dataframe(main_task_data, selected_tasks)
+        initial_set_data = convert_to_dataframe(main_task_data, config["selected_tasks"])
 
         for selected_aux_task_index in config["aux_task_index"]:
+
             aux_task_data = get_1_task_samples(selected_aux_task_index, config, train_set)
             # combine both sets
             initial_set_data = update_training_set(initial_set_data, aux_task_data)
     else:
         main_task_data = train_set.select(main_selected_indices)
-        initial_set_data = convert_to_dataframe(main_task_data, selected_tasks)
+        initial_set_data = convert_to_dataframe(main_task_data, config["selected_tasks"])
 
     # Remove inital_set from training set
-    train_set = convert_to_dataframe(train_set, selected_tasks)
+    train_set = convert_to_dataframe(train_set, config["selected_tasks"])
     train_set = remove_queried_index_from_pool_set(train_set, 
                                     initial_set_data, config)
     
     # convert back to deepchem dataset object
     train_set = dc.data.NumpyDataset(X=train_set.SMILES.values, 
-                            y=train_set[selected_tasks].values, 
+                            y=train_set[config["selected_tasks"]].values, 
                             ids=train_set.SMILES.values)
     
     initial_set_data = dc.data.NumpyDataset(X=initial_set_data.SMILES.values, 
-                            y=initial_set_data[selected_tasks].values, 
+                            y=initial_set_data[config["selected_tasks"]].values, 
                             ids=initial_set_data.SMILES.values)
     
     return initial_set_data, train_set
@@ -393,90 +335,3 @@ def convert_df_to_dc_data_object(df, config):
                                     y= df[config["all_tasks"]].values, 
                                     ids= df.SMILES.values)
     return dc_object
-
-def read_train_test_files(config, all_tasks=False):
-    """Read train and test files and return them in the same format as scafoldsplit_train_test."""
-    np.random.seed(config["seed"])
-    
-    if config["features_type"] == "FP":
-        # Read train files
-        train_data = read_file(config["train_target_file"])
-        train_BERT_features = read_file(config["train_BERT_features_file"])
-        train_ECFP_features = read_file(config["train_ECFP_features_file"])
-
-        # Read test files
-        test_data = read_file(config["test_target_file"])
-        test_BERT_features = read_file(config["test_BERT_features_file"])
-        test_ECFP_features = read_file(config["test_ECFP_features_file"])
-
-        # Process train data
-        train_data = train_data[train_data[config["Compound_col"]].isin(train_BERT_features["SMILES"])]
-        train_data = train_data.drop_duplicates(subset=config["Compound_col"])
-        train_data = train_data.reset_index(drop=True)
-
-        train_ECFP_features = train_ECFP_features[train_ECFP_features["SMILES"].isin(train_data[config["Compound_col"]])]
-        train_ECFP_features = train_ECFP_features.drop_duplicates(subset="SMILES")
-        train_ECFP_features = train_ECFP_features.reset_index(drop=True)
-
-        # Process test data
-        test_data = test_data[test_data[config["Compound_col"]].isin(test_BERT_features["SMILES"])]
-        test_data = test_data.drop_duplicates(subset=config["Compound_col"])
-        test_data = test_data.reset_index(drop=True)
-
-        test_ECFP_features = test_ECFP_features[test_ECFP_features["SMILES"].isin(test_data[config["Compound_col"]])]
-        test_ECFP_features = test_ECFP_features.drop_duplicates(subset="SMILES")
-        test_ECFP_features = test_ECFP_features.reset_index(drop=True)
-
-        if all_tasks:
-            train_y = train_data.loc[:, config["all_tasks"]].values
-            test_y = test_data.loc[:, config["all_tasks"]].values
-        else:
-            train_y = train_data.loc[:, config["selected_tasks"]].values
-            test_y = test_data.loc[:, config["selected_tasks"]].values
-
-        train_X = train_ECFP_features.iloc[:, 1:].values
-        test_X = test_ECFP_features.iloc[:, 1:].values
-
-    elif config["features_type"] == "BERT":
-        # Read train files
-        train_data = read_file(config["train_target_file"])
-        train_BERT_features = read_file(config["train_BERT_features_file"])
-
-        # Read test files
-        test_data = read_file(config["test_target_file"])
-        test_BERT_features = read_file(config["test_BERT_features_file"])
-
-        # Process train data
-        train_data = train_data[train_data[config["Compound_col"]].isin(train_BERT_features["SMILES"])]
-        train_data = train_data.drop_duplicates(subset=config["Compound_col"])
-        train_data = train_data.reset_index(drop=True)
-
-        # Process test data
-        test_data = test_data[test_data[config["Compound_col"]].isin(test_BERT_features["SMILES"])]
-        test_data = test_data.drop_duplicates(subset=config["Compound_col"])
-        test_data = test_data.reset_index(drop=True)
-
-        if all_tasks:
-            train_y = train_data.loc[:, config["all_tasks"]].values
-            test_y = test_data.loc[:, config["all_tasks"]].values
-        else:
-            train_y = train_data.loc[:, config["selected_tasks"]].values
-            test_y = test_data.loc[:, config["selected_tasks"]].values
-
-        train_X = train_BERT_features.iloc[:, 1:].values
-        test_X = test_BERT_features.iloc[:, 1:].values
-
-    # Reshape y if needed
-    if len(train_y.shape) == 1:
-        train_y = train_y.reshape(-1, 1)
-    if len(test_y.shape) == 1:
-        test_y = test_y.reshape(-1, 1)
-
-    # Create NumpyDataset objects
-    train_set = NumpyDataset(X=train_X, y=train_y, ids=train_data[config["Compound_col"]])
-    test_set = NumpyDataset(X=test_X, y=test_y, ids=test_data[config["Compound_col"]])
-
-    print('train_test_features', train_set.X.shape, test_set.X.shape)
-    print('train_test_targets', train_set.y.shape, test_set.y.shape)
-    
-    return train_set, test_set
