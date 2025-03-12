@@ -15,6 +15,7 @@ This repository contains the implementation of our paper "Molecular Property Pre
 Our framework achieves efficient molecular property prediction by:
 - Leveraging pretrained BERT representations in active learning framework
 - Using Bayesian acquisition functions (BALD, EPIG) for active learning
+- Demonstrating effectiveness on toxicity and ADME property prediction
 
 ## Installation
 
@@ -41,9 +42,16 @@ pip install -r requirements.txt
 ## Data
 
 ### Datasets
-We use two benchmark datasets for toxicity prediction:
-- **Tox21**: Toxicity prediction dataset
-- **ClinTox**: Clinical toxicity dataset
+We use three benchmark datasets:
+
+1. **Toxicity Datasets**:
+   - **Tox21**: Toxicity prediction dataset with 12 different toxicity endpoints
+   - **ClinTox**: Clinical toxicity dataset focusing on drug safety
+
+2. **ADME Dataset**:
+   - 2 classification datasets from TDC -ADME benchmark
+    - PAMPA Permeability, NCATS
+    - Pgp (P-glycoprotein) Inhibition, Broccatelli et al.
 
 ### Download Instructions
 1. Download the complete `datasets_for_active_learning` folder from [Figshare](https://figshare.com/articles/dataset/Datasets_and_computed_features/28580027)
@@ -77,6 +85,12 @@ sbatch scripts/Active_learning.sh configs/clintox/MolBERT_features/ClinTox_BALD.
 With Morgan Fingerprints (ECFP):
 ```bash
 sbatch scripts/Active_learning.sh configs/clintox/Morg_FP_features/ClinTox_BALD.json
+```
+
+#### ADME Properties
+With BERT and ECFP Features:
+```bash
+sbatch /scripts/Ative_learning_ADME.sh /scripts/configs/ADME/ADME.json```
 ```
 
 ## Citation
