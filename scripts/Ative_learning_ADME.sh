@@ -3,7 +3,7 @@
 #SBATCH --mem=40G
 #SBATCH --gpus=1
 #SBATCH --job-name=ADME_AL
-#SBATCH --array=0-660  # 10 seeds * 3 strategies * 11 datasets * 2 feature types = 660 total combinations
+#SBATCH --array=0-120  # 10 seeds * 3 strategies * 2 datasets * 2 feature types = 120 total combinations
 #SBATCH --output=/scratch/work/masooda1/logdir/active_learning_ADME_ScaffoldSplitter_%a.out
 
 # Directory configurations
@@ -40,15 +40,6 @@ DATASET_ARRAY=(
     #"hia_hou"
     "pampa_ncats"
     "pgp_broccatelli"
-    "bioavailability_ma"
-    "cyp2c19_veith"
-    "cyp2d6_veith"
-    "cyp3a4_veith"
-    "cyp1a2_veith"
-    "cyp2c9_veith"
-    "cyp2c9_substrate_carbonmangels"
-    "cyp2d6_substrate_carbonmangels"
-    "cyp3a4_substrate_carbonmangels"
 )
 
 # Calculate array indices
