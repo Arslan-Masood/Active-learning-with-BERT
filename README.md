@@ -1,10 +1,6 @@
 # Active Learning with BERT for Molecular Property Prediction
 
-This repository contains the implementation of our paper "Molecular Property Prediction using Pretrained-BERT and Bayesian Active Learning: A Data-Efficient Approach to Drug Design". Our approach combines pretrained BERT with Bayesian Active Learning to achieve efficient molecular property prediction with 50% fewer labeled compounds.
-
-<p align="center">
-  [Architecture diagram showing BERT + Active Learning pipeline]
-</p>
+This repository contains the implementation of our paper "Molecular Property Prediction using Pretrained-BERT and Bayesian Active Learning: A Data-Efficient Approach to Drug Design". 
 
 ## Table of Contents
 - [Overview](#overview)
@@ -18,10 +14,8 @@ This repository contains the implementation of our paper "Molecular Property Pre
 ## Overview
 
 Our framework achieves efficient molecular property prediction by:
-- Leveraging pretrained BERT representations from 1.26M compounds
-- Using Bayesian uncertainty estimation for active learning
-- Achieving equivalent performance with 50% fewer labeled compounds
-- Demonstrating improved uncertainty calibration
+- Leveraging pretrained BERT representations in active learning framework
+- Using Bayesian acquisition functions (BALD, EPIG) for active learning
 
 ## Installation
 
