@@ -17,6 +17,13 @@ Our framework achieves efficient molecular property prediction by:
 - Using Bayesian acquisition functions (BALD, EPIG) for active learning
 - Demonstrating effectiveness on toxicity and ADME property prediction
 
+<p align="center">
+  <img src="BERT + BNN head.png" alt="Active Learning with BERT Architecture" width="600"/>
+</p>
+
+*Figure 1: Overview of our Active Learning framework with BERT for molecular property prediction.*
+
+
 ## Installation
 
 1. Clone the repository:
@@ -25,7 +32,6 @@ Our framework achieves efficient molecular property prediction by:
 git clone https://github.com/Arslan-Masood/Active-learning-with-BERT.git
 cd Active-learning-with-BERT
 ```
-
 2. Create and activate a conda environment:
 
 ```bash
@@ -114,3 +120,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Muhammad Arslan Masood**
 - Email: arslan.masood@aalto.fi
 - Institution: Aalto University
+
