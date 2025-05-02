@@ -1,13 +1,12 @@
 # Active Learning with BERT for Molecular Property Prediction
 
-This repository contains the implementation of our paper "Molecular Property Prediction using Pretrained-BERT and Bayesian Active Learning: A Data-Efficient Approach to Drug Design". 
+This repository contains the implementation of our paper "[Molecular Property Prediction using Pretrained-BERT and Bayesian Active Learning: A Data-Efficient Approach to Drug Design](https://jcheminf.biomedcentral.com/articles/10.1186/s13321-025-00986-6)". 
 
-<p align="center">
-  <img src="BERT + BNN head.png" alt="Active Learning with BERT Architecture" width="600"/>
-</p>
-
-*Figure 1: Overview of our Active Learning framework with BERT for molecular property prediction.*
-
+   <p align="center">
+     <img src="figures/architecture.png" alt="Active Learning with BERT Architecture" width="600"/>
+   </p>
+   *Figure 1: Overview of our Active Learning with BERT framework for molecular property prediction.*
+   
 ## Table of Contents
 - [Overview](#overview)
 - [Installation](#installation)
@@ -102,11 +101,15 @@ sbatch /scripts/Ative_learning_ADME.sh /scripts/configs/ADME/ADME.json
 
 If you use this code in your research, please cite:
 ```bibtex
-@article{masood2024molecular,
-    title={Molecular Property Prediction using Pretrained-BERT and Bayesian Active Learning: A Data-Efficient Approach to Drug Design},
-    author={Muhammad Arslan Masood},
-    journal={under review},
-    year={2024}
+@article{masood2025molecular,
+    title={Molecular property prediction using pretrained-BERT and Bayesian active learning: a data-efficient approach to drug design},
+    author={Masood, Muhammad Arslan, Kaski, Samuel and Cui, Tianyu},
+    journal={Journal of Cheminformatics},
+    volume={17},
+    number={58},
+    year={2025},
+    doi={10.1186/s13321-025-00986-6},
+    url={https://doi.org/10.1186/s13321-025-00986-6}
 }
 ```
 
