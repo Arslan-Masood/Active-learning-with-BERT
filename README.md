@@ -3,7 +3,7 @@
 This repository contains the implementation of our paper "[Molecular Property Prediction using Pretrained-BERT and Bayesian Active Learning: A Data-Efficient Approach to Drug Design](https://jcheminf.biomedcentral.com/articles/10.1186/s13321-025-00986-6)". 
 
    <p align="center">
-     <img src="BERT + BNN head.png" alt="Active Learning with BERT Architecture" width="900"/>
+     <img src="BERT + BNN head.png" alt="Active Learning with BERT Architecture" width="800"/>
    </p>
    *Figure 1: Overview of our Active Learning with BERT framework for molecular property prediction.*
    
